@@ -1,0 +1,5 @@
+I, [2023-06-22T19:57:58.598828 #20654]  INFO -- : 
+    Request: GET /tests/1
+    Handler: TestsController#show
+    Parameters: {"id"=>"1"}
+    Response: 200 text/html 
