@@ -9,11 +9,13 @@ module Simpler
       @name = extract_name
       @request = Rack::Request.new(env)
       @response = Rack::Response.new
+      @body = nil
     end
 
     def make_response(action)
       @request.env['simpler.controller'] = self
       @request.env['simpler.action'] = action
+      @request.env['simpler.params'].each { |key, value| @request.update_param(key.to_sym, value) }
 
       set_default_headers
       send(action)
@@ -24,6 +26,18 @@ module Simpler
 
     private
 
+    def status(value)
+      @response.status = value
+    end
+
+    def headers
+      @response
+    end
+
+    def params
+      @request.params
+    end
+
     def extract_name
       self.class.name.match('(?<name>.+)Controller')[:name].downcase
     end
@@ -33,21 +47,22 @@ module Simpler
     end
 
     def write_response
-      body = render_body
+      @body = render_body if @body.nil?
 
-      @response.write(body)
+      @response.write(@body)
     end
 
     def render_body
       View.new(@request.env).render(binding)
     end
 
-    def params
-      @request.params
-    end
-
     def render(template)
-      @request.env['simpler.template'] = template
+      if template.is_a? Hash
+        @response.headers['Content-Type'] = 'text/' + template.keys.first.to_s
+        @body = template.values.first
+      else
+        @request.env['simpler.template'] = template
+      end
     end
 
   end
